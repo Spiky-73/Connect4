@@ -1,20 +1,18 @@
-namespace Connect4;
+namespace Connect4.Core;
 
 public class Connect4 {
-    public static readonly Random Random = new();
-    public static readonly object RandLock = new();
 
     public int Width { get; private set; }
     public int Height { get; private set; }
 
-    private readonly Players.IPlayer[] _players;
+    private readonly IPlayer[] _players;
     private int _turn;
 
     private readonly List<int>[] _grid;
     private int _placed;
 
 
-    public Connect4(int w, int h, params Players.IPlayer[] players) {
+    public Connect4(int w, int h, params IPlayer[] players) {
         Width = w;
         Height = h;
 
@@ -28,7 +26,7 @@ public class Connect4 {
     public void PrepareGame(int turn = -1){
         for (int p = 0; p < _players.Length; p++) _players[p].Setup(_players.Length, Width, Height);
 
-        if(turn == -1) lock (RandLock) _turn = Random.Next(0, _players.Length);
+        if(turn == -1) lock (Utility.RNGLock) _turn = Utility.Random.Next(0, _players.Length);
         else _turn = turn;
 
         _placed = 0;

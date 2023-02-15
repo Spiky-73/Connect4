@@ -1,6 +1,6 @@
-namespace Connect4.Players;
+namespace Connect4.Core;
 
-public class Human : IPlayer {
+public class Player : IPlayer {
 
     public void Setup(int players, int w, int h){}
 

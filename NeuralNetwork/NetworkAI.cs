@@ -1,6 +1,6 @@
-namespace Connect4.Players;
+namespace Connect4.NeuralNetwork;
 
-public class NetworkAI : IPlayer {
+public class NetworkAI : Core.IPlayer {
 
     private int _width, _height;
     private float[] _grid;
@@ -35,8 +35,15 @@ public class NetworkAI : IPlayer {
     }
 
     public static int Fitness(int win) => win switch {
-        0 => 0,
-        1 => 1,
-        2 or _ => 0
+        0 => -1,
+        1 => 3,
+        2 or _ => -2
     };
+
+    public static int TestNetwork(NeuralNetwork child, NeuralNetwork other){
+        int fitness = 0;
+        Core.Connect4 game = new(7, 6, new NetworkAI(child), new NetworkAI(other));
+        fitness += Fitness(game.Run(0)) + Fitness(game.Run(1));
+        return fitness;
+    }
 }

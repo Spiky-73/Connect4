@@ -1,4 +1,4 @@
-namespace Connect4.Players;
+namespace Connect4.Core;
 
 public interface IPlayer{
     void Setup(int players, int w, int h);

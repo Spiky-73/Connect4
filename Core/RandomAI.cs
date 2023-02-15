@@ -1,4 +1,4 @@
-namespace Connect4.Players;
+namespace Connect4.Core;
 
 public class RandomAI : IPlayer {
 
@@ -18,8 +18,8 @@ public class RandomAI : IPlayer {
         for (int c = 0; c < _placed.Length; c++){
             if(_placed[c] < _height) free.Add(c);
         }
-        lock (Connect4.RandLock){
-            col = free[Connect4.Random.Next(free.Count)];
+        lock (Utility.RNGLock){
+            col = free[Utility.Random.Next(free.Count)];
         }
         return col;
     }

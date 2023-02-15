@@ -1,4 +1,4 @@
-namespace Connect4;
+namespace Connect4.NeuralNetwork;
 
 public class NeuralNetwork {
 
@@ -7,8 +7,8 @@ public class NeuralNetwork {
     public float[][] biaises;   // layer, neuron
     public float[][][] weights; // layer, neuron*link
 
-    public NeuralNetwork(string path) {
-        string[] lines = File.ReadAllLines(path);
+    public NeuralNetwork(string filePath) {
+        string[] lines = File.ReadAllLines(filePath);
         string[] parts = lines[0].Split();
 
         layers = Array.Empty<int>();
@@ -20,6 +20,7 @@ public class NeuralNetwork {
             parts = lines[i].Split();
             if (lines[i] == "") {
                 l++;
+                if (l >= layers.Length) break;
                 n = 0;
                 biaises[l] = new float[layers[l]];
                 weights[l] = new float[layers[l]][];
@@ -53,9 +54,9 @@ public class NeuralNetwork {
         weights = new float[layers.Length][][];
 
         for (int l = 0; l < layers.Length; l++) {
-            biaises[l] = RandomArray(layers[l]);
+            biaises[l] = Utility.RandomArray(layers[l]);
             weights[l] = new float[layers[l]][];
-            for (int n = 0; n < layers[l]; n++) weights[l][n] = RandomArray(l == 0 ? this.inputLayer : layers[l - 1]);
+            for (int n = 0; n < layers[l]; n++) weights[l][n] = Utility.RandomArray(l == 0 ? this.inputLayer : layers[l - 1]);
         }
     }
 
@@ -68,7 +69,7 @@ public class NeuralNetwork {
         List<Task> cells = new();
         for (int n = 0; n < results.Length; n++) {
             int neuron = n;
-            cells.Add(Task.Run(() => results[neuron] = Activation(ComputeNeuron(inputs, layer, neuron))));
+            cells.Add(Task.Run(() => results[neuron] = Utility.ReLU(ComputeNeuron(inputs, layer, neuron))));
         }
         Task.WaitAll(cells.ToArray());
         return results;
@@ -81,25 +82,16 @@ public class NeuralNetwork {
         return sum;
     }
 
-    private static float Activation(float res) => res < 0 ? 0 : res;
-
-    public static float[] RandomArray(int length){
-        float[] array = new float[length];
-        lock (Connect4.RandLock) {
-            for (int i = 0; i < array.Length; i++) array[i] = (Connect4.Random.NextSingle() - 0.5f)*4;
-        }
-        return array;
-    }
-
-    public void Save(string path){
+    public void Save(string directory, string name){
+        Directory.CreateDirectory(directory);
         List<string> lines = new() {
-            $"{inputLayer} {string.Join(" ", layers)}"
+            $"{inputLayer} {string.Join(" ", layers)}",
+            ""
         };
         for (int l = 0; l < layers.Length; l++){
             for (int n = 0; n < layers[l]; n++) lines.Add($"{biaises[l][n]} {string.Join(" ", weights[l][n])}");
-            lines.Add("\n");
+            if(l != layers.Length-1) lines.Add("");
         }
-        File.WriteAllLines(path, lines);
+        File.WriteAllLines($"{directory}/{name}.txt", lines);
     }
-
 }

@@ -1,21 +1,31 @@
-namespace Connect4.Evolution;
+namespace Connect4.NeuralNetwork;
 
 public record struct Mutation(float Chance, float Strengh);
 
-public static class Mutations {
+public static class Mutator {
 
-    public const int AnsynchTests = 10;
+    public const int AnsynchUnits = 10;
 
-    public static (NeuralNetwork, int)[] NextGeneration(NeuralNetwork[] roots, int maxNetworks, Func<NeuralNetwork, NeuralNetwork, int> FitnessTest, string? saveDir = null){
+    public static void Evolve(int inputLayer, int[] layers, Func<NeuralNetwork, NeuralNetwork, int> FitnessTest, int savedNetworks, int maxNetworks, string saveDir, int generations = -1){
+        NeuralNetwork[] roots = new NeuralNetwork[savedNetworks];
+        for (int i = 0; i < roots.Length; i++) roots[i] = new(inputLayer, layers);
+
+        int gen = 0;
+        while (generations == -1 || gen < generations) {
+            NextGeneration(gen, roots, maxNetworks, FitnessTest, $"{saveDir}/Generation#{gen+1}");
+            gen++;
+        }
+    }
+
+    public static (NeuralNetwork, int)[] NextGeneration(int currentGen, NeuralNetwork[] roots, int maxNetworks, Func<NeuralNetwork, NeuralNetwork, int> FitnessTest, string? saveDir = null){
         int finished = 0;
         
-
         List<(NeuralNetwork, int)> bestNetworks = new(roots.Length+1);
 
         List<NeuralNetwork> childs = new(roots.Length);
-        List<Task<int>> runningTests = new(AnsynchTests);
+        List<Task<int>> runningTests = new(AnsynchUnits);
 
-        void UpdateDisplay() => Console.Write($"Mutating... (finished: {finished}/{maxNetworks}, running: {runningTests.Count})\r");
+        void UpdateDisplay() => Console.Write($"Generation {currentGen+1}... (finished: {finished}/{maxNetworks}, running: {runningTests.Count})\r");
 
         int StartTest(NeuralNetwork child){
             int fitness = 0;
@@ -24,7 +34,7 @@ public static class Mutations {
         }
         int n = 0;
         while(finished < maxNetworks){
-            while(runningTests.Count < AnsynchTests){
+            while(runningTests.Count < AnsynchUnits){
                 NeuralNetwork child = runningTests.Count + finished < roots.Length ? roots[n] : roots[n].Mutate(new Mutation(0.05f, 0.5f), new Mutation(0.01f, 3f));
                 childs.Add(child);
                 runningTests.Add(Task.Run(() => StartTest(child)));
@@ -48,14 +58,13 @@ public static class Mutations {
             UpdateDisplay();
         }
 
-        Console.Write($"Mutation Finished! Best fitness: ");
+        Console.Write($"Generation {currentGen+1} finished! Best fitness: ");
         foreach((NeuralNetwork, int) bests in bestNetworks) Console.Write($"{bests.Item2: +#;-#;0} ");
         Console.WriteLine();
 
         if(saveDir is not null){
-            Directory.CreateDirectory(saveDir);
             for (int bn = 0; bn < bestNetworks.Count; bn++){
-                bestNetworks[bn].Item1.Save($"{saveDir}\\network#{bn+1}.NN");
+                bestNetworks[bn].Item1.Save(saveDir, $"network#{bn+1}");
             }
         }
         return bestNetworks.ToArray();
@@ -63,9 +72,9 @@ public static class Mutations {
 
     public static NeuralNetwork Mutate(this NeuralNetwork root, params Mutation[] mutations){
         float GetMutation(){
-            lock(Connect4.RandLock){
+            lock(Utility.RNGLock){
                 foreach(Mutation mutation in mutations){
-                    if(Connect4.Random.NextSingle() < mutation.Chance) return (Connect4.Random.NextSingle()-0.5f)*mutation.Strengh*2;
+                    if(Utility.Random.NextSingle() < mutation.Chance) return (Utility.Random.NextSingle()-0.5f)*mutation.Strengh*2;
                 }
             }
             return 0;
