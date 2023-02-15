@@ -25,34 +25,40 @@ public class Connect4 {
         _grid = new List<int>[Width];
     }
 
-    public void PrepareGame(){
+    public void PrepareGame(int turn = -1){
         for (int p = 0; p < _players.Length; p++) _players[p].Setup(_players.Length, Width, Height);
 
-        lock (RandLock) _turn = Random.Next(0, _players.Length);
+        if(turn == -1) lock (RandLock) _turn = Random.Next(0, _players.Length);
+        else _turn = turn;
+
         _placed = 0;
         for (int c = 0; c < Width; c++) _grid[c] = new();
     }
 
-    public int Run(bool display = false) {
-        PrepareGame();
+    public int Run(int turn = -1, bool display = false) {
+        PrepareGame(turn);
 
-        if (display) DisplayGrid();
 
         while(_placed < Width * Height){
+            if(display) DisplayGrid();
             int col = _players[_turn].Place();
 
-            if (col < 0 || col >= Width || _grid[col].Count >= Height) return (_turn + 1) % _players.Length+1;
+            if (col < 0 || col >= Width || _grid[col].Count >= Height)
+                return (_turn + 1) % _players.Length+1;
 
             _grid[col].Add(_turn);
             _placed++;
-            if(display) DisplayGrid();
 
-            if(Wins(_turn, col)) return _turn+1;
-            
-            for (int p = 0; p < _players.Length; p++)_players[p].OnPlacement(_turn+1, col);
+            if (Wins(_turn, col)) {
+                if (display) DisplayGrid();
+                return _turn + 1;
+            }
+
+            for (int p = 0; p < _players.Length; p++)_players[p].OnPlacement(_placed == turn, _turn+1, col);
 
             _turn = (_turn + 1) % _players.Length;
         }
+        if (display) DisplayGrid();
         return 0;
     }
 

@@ -3,13 +3,12 @@ namespace Connect4.Players;
 public class NetworkAI : IPlayer {
 
     private int _width, _height;
-
     private float[] _grid;
-
     private readonly NeuralNetwork _network;
 
-    public NetworkAI(){
-        _network = new(6*7, 32, 32, 32, 7); // TODO load data
+    public NetworkAI(NeuralNetwork network){
+        (_width, _height) = (0, 0);
+        _network = network;
         _grid = Array.Empty<float>();
     }
 
@@ -22,16 +21,22 @@ public class NetworkAI : IPlayer {
 
     public int Place() {
         float[] outs = _network.Compute(_grid);
-        int col = 0;
+        int col = -1;
         for (int c = 0; c < outs.Length; c++){
-            if(outs[c] > outs[col] && _grid[c+(_height-1)*_width] == 0) col = c;
+            if(_grid[c + (_height - 1) * _width] == 0 && (col == -1 || outs[c] > outs[col])) col = c;
         }
         return col;
     }
 
-    public void OnPlacement(int player, int col) {
+    public void OnPlacement(bool self, int player, int col) {
         int y = 0;
         while(_grid[col + _width*y] != 0) y++;
-        _grid[col + _width * y] = player;
+        _grid[col + _width * y] = self ? 1 : -1;
     }
+
+    public static int Fitness(int win) => win switch {
+        0 => 0,
+        1 => 1,
+        2 or _ => 0
+    };
 }

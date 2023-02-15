@@ -9,6 +9,7 @@
 			"Always On",
 			"Git",
 			"C#"
-		]
+		],
+		"todo-tree.tree.scanMode": "workspace"
 	}
 }

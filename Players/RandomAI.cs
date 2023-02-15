@@ -10,7 +10,7 @@ public class RandomAI : IPlayer {
         _height = h;
     }
 
-    public void OnPlacement(int player, int col) => _placed[col]++;
+    public void OnPlacement(bool self, int player, int col) => _placed[col]++;
 
     public int Place(){
         int col = 0;

@@ -9,6 +9,6 @@ public class Human : IPlayer {
         return int.Parse(Console.ReadLine()!);
     }
 
-    public void OnPlacement(int player, int col) { }
+    public void OnPlacement(bool self, int player, int col) { }
 
 }
