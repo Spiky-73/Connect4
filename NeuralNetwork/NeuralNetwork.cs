@@ -5,7 +5,7 @@ public class NeuralNetwork {
     public int inputLayer;      // layer
     public int[] layers;        // layer
     public float[][] biaises;   // layer, neuron
-    public float[][][] weights; // layer, neuron*link
+    public float[][][] weights; // layer, neuron*Connection
 
     public NeuralNetwork(string filePath) {
         string[] lines = File.ReadAllLines(filePath);

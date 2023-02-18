@@ -12,5 +12,18 @@ public static class Utility {
         return array;
     }
 
-    public static float ReLU(float f) => f < 0 ? 0 : f;
+    public static T WeigthedChoice<T>(ICollection<T> choices, Func<T, float> weight) {
+        float totalWeight = 0;
+        foreach(T c in choices) totalWeight += weight(c);
+
+        float choice = Random.NextSingle() * totalWeight;
+        float sum = 0;
+        foreach(T c in choices) {
+            sum += weight(c);
+            if(choice < sum) return c;
+        }
+        throw new NotSupportedException();
+    }
+
+public static float ReLU(float f) => f < 0 ? 0 : f;
 }
