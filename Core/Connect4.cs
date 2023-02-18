@@ -5,10 +5,10 @@ public class Connect4 {
     public int Width { get; private set; }
     public int Height { get; private set; }
 
-    private readonly IPlayer[] _players;
+    public readonly IPlayer[] Players;
     private int _turn;
 
-    private readonly List<int>[] _grid;
+    public readonly List<int>[] Grid;
     private int _placed;
 
 
@@ -16,21 +16,21 @@ public class Connect4 {
         Width = w;
         Height = h;
 
-        _players = players;
+        Players = players;
 
         _placed = -1;
         _turn = -1;
-        _grid = new List<int>[Width];
+        Grid = new List<int>[Width];
     }
 
     public void PrepareGame(int turn = -1){
-        for (int p = 0; p < _players.Length; p++) _players[p].Setup(_players.Length, Width, Height);
+        for (int p = 0; p < Players.Length; p++) Players[p].Setup(this, Players.Length, Width, Height);
 
-        if(turn == -1) lock (Utility.RNGLock) _turn = Utility.Random.Next(0, _players.Length);
+        if(turn == -1) lock (Utility.RNGLock) _turn = Utility.Random.Next(0, Players.Length);
         else _turn = turn;
 
         _placed = 0;
-        for (int c = 0; c < Width; c++) _grid[c] = new();
+        for (int c = 0; c < Width; c++) Grid[c] = new();
     }
 
     public int Run(int turn = -1, bool display = false) {
@@ -39,12 +39,12 @@ public class Connect4 {
 
         while(_placed < Width * Height){
             if(display) DisplayGrid();
-            int col = _players[_turn].Place();
+            int col = Players[_turn].Place();
 
-            if (col < 0 || col >= Width || _grid[col].Count >= Height)
-                return (_turn + 1) % _players.Length+1;
+            if (col < 0 || col >= Width || Grid[col].Count >= Height)
+                return (_turn + 1) % Players.Length+1;
 
-            _grid[col].Add(_turn);
+            Grid[col].Add(_turn);
             _placed++;
 
             if (Wins(_turn, col)) {
@@ -52,30 +52,32 @@ public class Connect4 {
                 return _turn + 1;
             }
 
-            for (int p = 0; p < _players.Length; p++)_players[p].OnPlacement(_placed == turn, _turn+1, col);
+            for (int p = 0; p < Players.Length; p++)Players[p].OnPlacement(_placed == turn, _turn+1, col);
 
-            _turn = (_turn + 1) % _players.Length;
+            _turn = (_turn + 1) % Players.Length;
         }
         if (display) DisplayGrid();
         return 0;
     }
+
+    public bool ColumnFull(int col) => Grid[col].Count >= Height;
 
 
     private bool Wins(int player, int col){
         foreach((int dx,int dy) in Directions){
             int count = 1;
             int x = col;
-            int y = _grid[col].Count - 1;
+            int y = Grid[col].Count - 1;
             do {
                 x += dx;
                 y += dy;
-            } while (0 <= x && x < Width && 0 <= y && y < _grid[x].Count && _grid[x][y] == player && ++count < 4);
+            } while (0 <= x && x < Width && 0 <= y && y < Grid[x].Count && Grid[x][y] == player && ++count < 4);
             x = col;
-            y = _grid[col].Count - 1;
+            y = Grid[col].Count - 1;
             do {
                 x -= dx;
                 y -= dy;
-            } while (0 <= x && x < Width && 0 <= y && y < _grid[x].Count && _grid[x][y] == player && ++count < 4);
+            } while (0 <= x && x < Width && 0 <= y && y < Grid[x].Count && Grid[x][y] == player && ++count < 4);
             if(count >= 4) return true;
         }
         return false;
@@ -87,7 +89,7 @@ public class Connect4 {
         Console.WriteLine();
         for (int r = 0; r < Height; r++) {
             for (int c = 0; c < Width; c++) {
-                Console.Write(_grid[c].Count > Height - r - 1 ? (_grid[c][Height - r - 1] + 1).ToString() : ".");
+                Console.Write(Grid[c].Count > Height - r - 1 ? (Grid[c][Height - r - 1] + 1).ToString() : ".");
             }
             string ui = r switch {
                 1 => $"    Turn {_placed + 1}/{Width * Height}",

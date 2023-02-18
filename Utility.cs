@@ -25,5 +25,17 @@ public static class Utility {
         throw new NotSupportedException();
     }
 
-public static float ReLU(float f) => f < 0 ? 0 : f;
+    public static float ReLU(float f) => f < 0 ? 0 : f;
+
+    public enum InclusionFlag {
+        Min = 0x01,
+        Max = 0x10,
+        Both = Min | Max
+    }
+
+    public static bool InRange<T>(this T self, T min, T max, InclusionFlag flags = InclusionFlag.Min) where T : IComparable<T> {
+        int l = self.CompareTo(min);
+        int r = self.CompareTo(max);
+        return (l > 0 || (flags.HasFlag(InclusionFlag.Min) && l == 0)) && (r < 0 || (flags.HasFlag(InclusionFlag.Max) && r == 0));
+    }
 }

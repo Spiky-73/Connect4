@@ -1,13 +1,13 @@
-namespace Connect4.NeuralNetwork;
+namespace Connect4.FixedNetwork;
 
-public class NeuralNetwork {
+public class Network {
 
     public int inputLayer;      // layer
     public int[] layers;        // layer
     public float[][] biaises;   // layer, neuron
     public float[][][] weights; // layer, neuron*Connection
 
-    public NeuralNetwork(string filePath) {
+    public Network(string filePath) {
         string[] lines = File.ReadAllLines(filePath);
         string[] parts = lines[0].Split();
 
@@ -40,13 +40,13 @@ public class NeuralNetwork {
 
 
     }
-    public NeuralNetwork(int inputLayer, int[] layers, float[][] biaises, float[][][] weights) {
+    public Network(int inputLayer, int[] layers, float[][] biaises, float[][][] weights) {
         this.inputLayer = inputLayer;
         this.layers = layers;
         this.biaises = biaises;
         this.weights = weights;
     }
-    public NeuralNetwork(int inputLayer, params int[] layers) {
+    public Network(int inputLayer, params int[] layers) {
         this.inputLayer = inputLayer;
         this.layers = layers;
 

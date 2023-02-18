@@ -1,4 +1,4 @@
-namespace Connect4.NeuralNetwork;
+namespace Connect4.FixedNetwork;
 
 public record struct Mutation(float Chance, float Strengh);
 
@@ -6,9 +6,9 @@ public static class Mutator {
 
     public const int AnsynchUnits = 10;
 
-    public static void Evolve(int inputLayer, int[] layers, Func<NeuralNetwork, NeuralNetwork, int> FitnessTest, int savedNetworks, int maxNetworks, string saveDir, int generations = -1){
-        NeuralNetwork[] roots = new NeuralNetwork[savedNetworks];
-        for (int i = 0; i < roots.Length; i++) roots[i] = new(inputLayer, layers);
+    public static void Evolve(int inputLayer, int[] layers, Func<Network, Network, int> FitnessTest, int savedNetworks, int maxNetworks, string saveDir, int generations = -1){
+        (Network, int)[] roots = new (Network, int)[savedNetworks];
+        for (int i = 0; i < roots.Length; i++) roots[i] = (new(inputLayer, layers), 0);
 
         int gen = 0;
         while (generations == -1 || gen < generations) {
@@ -17,25 +17,25 @@ public static class Mutator {
         }
     }
 
-    public static (NeuralNetwork, int)[] NextGeneration(int currentGen, NeuralNetwork[] roots, int maxNetworks, Func<NeuralNetwork, NeuralNetwork, int> FitnessTest, string? saveDir = null){
+    public static (Network, int)[] NextGeneration(int currentGen, (Network, int)[] roots, int maxNetworks, Func<Network, Network, int> FitnessTest, string? saveDir = null){
         int finished = 0;
         
-        List<(NeuralNetwork, int)> bestNetworks = new(roots.Length+1);
+        List<(Network, int)> bestNetworks = new(roots.Length+1);
 
-        List<NeuralNetwork> childs = new(roots.Length);
+        List<Network> childs = new(roots.Length);
         List<Task<int>> runningTests = new(AnsynchUnits);
 
         void UpdateDisplay() => Console.Write($"Generation {currentGen+1}... (finished: {finished}/{maxNetworks}, running: {runningTests.Count})\r");
 
-        int StartTest(NeuralNetwork child){
+        int StartTest(Network child){
             int fitness = 0;
-            for (int r = 0; r < roots.Length; r++) fitness += FitnessTest(child, roots[r]);
+            for (int r = 0; r < roots.Length; r++) fitness += FitnessTest(child, roots[r].Item1);
             return fitness;
         }
         int n = 0;
         while(finished < maxNetworks){
             while(runningTests.Count < AnsynchUnits){
-                NeuralNetwork child = runningTests.Count + finished < roots.Length ? roots[n] : roots[n].Mutate(new Mutation(0.05f, 0.5f), new Mutation(0.01f, 3f));
+                Network child = runningTests.Count + finished < roots.Length ? roots[n].Item1 : roots[n].Item1.Mutate(new Mutation(0.03f, 0.5f), new Mutation(0.01f, 3f));
                 childs.Add(child);
                 runningTests.Add(Task.Run(() => StartTest(child)));
                 UpdateDisplay();
@@ -46,7 +46,7 @@ public static class Mutator {
             if(bestNetworks.Count < roots.Length){
                 bestNetworks.Add((childs[t], fitness));
             }else {
-                int i = bestNetworks.FindIndex(((NeuralNetwork n, int f) res) => res.f < fitness);
+                int i = bestNetworks.FindIndex(((Network n, int f) res) => res.f < fitness);
                 if(i != -1) {
                     bestNetworks.Insert(i, (childs[t], fitness));
                     while (bestNetworks.Count > roots.Length) bestNetworks.RemoveAt(bestNetworks.Count - 1);
@@ -59,7 +59,7 @@ public static class Mutator {
         }
 
         Console.Write($"Generation {currentGen+1} finished! Best fitness: ");
-        foreach((NeuralNetwork, int) bests in bestNetworks) Console.Write($"{bests.Item2: +#;-#;0} ");
+        foreach((Network, int) bests in bestNetworks) Console.Write($"{bests.Item2: +#;-#;0} ");
         Console.WriteLine();
 
         if(saveDir is not null){
@@ -70,7 +70,7 @@ public static class Mutator {
         return bestNetworks.ToArray();
     }
 
-    public static NeuralNetwork Mutate(this NeuralNetwork root, params Mutation[] mutations){
+    public static Network Mutate(this Network root, params Mutation[] mutations){
         float GetMutation(){
             lock(Utility.RNGLock){
                 foreach(Mutation mutation in mutations){

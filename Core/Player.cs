@@ -2,7 +2,7 @@ namespace Connect4.Core;
 
 public class Player : IPlayer {
 
-    public void Setup(int players, int w, int h){}
+    public void Setup(Connect4 game, int players, int w, int h){}
 
     public int Place() {
         Console.Write("Select a column : ");

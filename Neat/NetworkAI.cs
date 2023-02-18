@@ -12,7 +12,7 @@ public class NetworkAI : Core.IPlayer {
         _grid = Array.Empty<float>();
     }
 
-    public void Setup(int players, int w, int h) {
+    public void Setup(Core.Connect4 game, int players, int w, int h) {
         if (w != 7 || h != 6 || players > 2) throw new NotImplementedException();
         _width = w;
         _height = h;
@@ -40,7 +40,7 @@ public class NetworkAI : Core.IPlayer {
         2 or _ => -2
     };
 
-    public static  float Evaluate(Network network){
+    public static  float TestNetwork(Network network){
         int fitness = 0;
         foreach(Specie s in network.genome.Neat.Species){
             for (int n = 0; n < MathF.Ceiling(s.Networks.Count * 0.25f); n++) {
@@ -49,5 +49,16 @@ public class NetworkAI : Core.IPlayer {
             }
         }
         return fitness * fitness;
+    }
+
+    public static void Test(){
+        Neat neat = new(42, 7, TestNetwork);
+
+        neat.StartEvolution(100);
+
+        foreach (Specie s in neat.Species) {
+            Core.Connect4 game = new(7, 6, new Core.Player(), new NetworkAI(s.Networks[0]));
+            game.Run(display:true);
+        }
     }
 }

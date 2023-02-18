@@ -5,7 +5,7 @@ public class RandomAI : IPlayer {
     private int[] _placed = Array.Empty<int>();
     private int _height;
 
-    public void Setup(int players, int w, int h) {
+    public void Setup(Connect4 game, int players, int w, int h) {
         _placed = new int[w];
         _height = h;
     }

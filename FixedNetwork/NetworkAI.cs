@@ -1,18 +1,18 @@
-namespace Connect4.NeuralNetwork;
+namespace Connect4.FixedNetwork;
 
 public class NetworkAI : Core.IPlayer {
 
     private int _width, _height;
     private float[] _grid;
-    private readonly NeuralNetwork _network;
+    private readonly Network _network;
 
-    public NetworkAI(NeuralNetwork network){
+    public NetworkAI(Network network){
         (_width, _height) = (0, 0);
         _network = network;
         _grid = Array.Empty<float>();
     }
 
-    public void Setup(int players, int w, int h) {
+    public void Setup(Core.Connect4 game, int players, int w, int h) {
         if(w != 7 || h != 6 || players > 2) throw new NotImplementedException();
         _width = w;
         _height = h;
@@ -40,10 +40,26 @@ public class NetworkAI : Core.IPlayer {
         2 or _ => -2
     };
 
-    public static int TestNetwork(NeuralNetwork child, NeuralNetwork other){
+    public static int TestNetwork(Network child, Network other){
         int fitness = 0;
         Core.Connect4 game = new(7, 6, new NetworkAI(child), new NetworkAI(other));
         fitness += Fitness(game.Run(0)) + Fitness(game.Run(1));
         return fitness;
+    }
+
+    public static void Test() {
+
+        (Network, int)[] roots = new (Network, int)[20];
+        for (int i = 0; i < roots.Length; i++) roots[i] = (new(42, 16, 16, 16, 7), 0);
+
+        int gen = 0;
+        while (gen < 1000) {
+            roots = Mutator.NextGeneration(gen, roots, 250, TestNetwork);
+            gen++;
+        }
+        foreach ((Network, int) network in roots) {
+            Core.Connect4 game = new(7, 6, new Core.Player(), new NetworkAI(network.Item1));
+            game.Run(display: true);
+        }
     }
 }
